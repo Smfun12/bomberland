@@ -30,7 +30,7 @@ UNITS = ["c", "d", "e", "f", "g", "h"]
 Hyperparameters
 """
 
-EPOCHS = 5
+EPOCHS = 10
 STEPS = 1000
 BATCH_SIZE = 128
 LEARNING_RATE_ACTOR = 0.0003
@@ -83,7 +83,7 @@ async def train(env: GymEnv, agent: PPO):
             else:
                 next_observation, done, info = await env.step([action_or_idle])
 
-            reward = calculate_reward(prev_observation, next_observation, current_agent_id=agent_id, current_unit_id=unit_id)
+            reward = calculate_reward(prev_observation, action, next_observation, current_agent_id=agent_id, current_unit_id=unit_id)
             next_state = observation_to_state(next_observation, current_agent_id=agent_id, current_unit_id=unit_id)
 
             # saving reward and is_terminals
