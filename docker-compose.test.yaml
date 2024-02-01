@@ -14,7 +14,7 @@ services:
             - PRNG_SEED=1234
             - SHUTDOWN_ON_GAME_END_ENABLED=1
             - TELEMETRY_ENABLED=1
-            - TICK_RATE_HZ=10
+            - TICK_RATE_HZ=1
             - TRAINING_MODE_ENABLED=0
             - WORLD_SEED=1234
         deploy:
@@ -46,9 +46,9 @@ services:
         extends:
             file: docker-compose.templates.yaml
             # update next line with a service in base-compose.yml to change agent
-            service: agent-random-test
+            service: agent-ppo-test
         environment:
-            - GAME_CONNECTION_STRING=ws://game-engine:3000/?role=agent&agentId=agentB&name=agent-random
+            - GAME_CONNECTION_STRING=ws://game-engine:3000/?role=agent&agentId=agentB&name=agent-ppo
         depends_on:
             - game-engine
         deploy:

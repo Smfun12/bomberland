@@ -111,7 +111,7 @@ class ActorCritic(nn.Module):
 
 
 class PPO:
-    def __init__(self, state_dim, action_dim, lr_actor, lr_critic, gamma, K_epochs, eps_clip, has_continuous_action_space, action_std_init=0.6):
+    def __init__(self, state_dim, action_dim, lr_actor, lr_critic, gamma, K_epochs, eps_clip, has_continuous_action_space, action_std_init=0.6, policy=None):
 
         self.has_continuous_action_space = has_continuous_action_space
 
@@ -124,7 +124,7 @@ class PPO:
         
         self.buffer = RolloutBuffer()
 
-        self.policy = ActorCritic(state_dim, action_dim, has_continuous_action_space, action_std_init).to(device)
+        self.policy = policy if policy is not None else ActorCritic(state_dim, action_dim, has_continuous_action_space, action_std_init).to(device)
         self.optimizer = torch.optim.Adam([
                         {'params': self.policy.actor.parameters(), 'lr': lr_actor},
                         {'params': self.policy.critic.parameters(), 'lr': lr_critic}
