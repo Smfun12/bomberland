@@ -9,7 +9,7 @@ from components.environment.config import (
     FWD_MODEL_URI,  
 )
 from components.environment.gym import Gym, GymEnv
-from components.environment.mocks import MOCK_15x15_INITIAL_OBSERVATION
+from components.environment.mocks import MOCK_15x15_INITIAL_OBSERVATION_2
 from components.models.ppo import PPO
 from components.action import make_action
 from components.reward import calculate_reward
@@ -30,8 +30,8 @@ UNITS = ["c", "d", "e", "f", "g", "h"]
 Hyperparameters
 """
 
-EPOCHS = 10
-STEPS = 1000
+EPOCHS = 1
+STEPS = 1
 BATCH_SIZE = 128
 LEARNING_RATE_ACTOR = 0.0003
 LEARNING_RATE_CRITIC = 0.001
@@ -139,7 +139,7 @@ async def main():
 
     print("============================================================================================")
     print("Initializing agent")
-    env = gym.make("bomberland-gym", MOCK_15x15_INITIAL_OBSERVATION)
+    env = gym.make("bomberland-gym", MOCK_15x15_INITIAL_OBSERVATION_2)
     observation = await env.reset()
     n_states = state_dimensions(observation)
     n_actions = action_dimensions()
