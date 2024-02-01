@@ -92,7 +92,7 @@ def compute_time_reward(observation: Observation, current_unit_id):
     tick = observation['tick']
     coor = observation['unit_state'][current_unit_id]['coordinates']
     dist = abs(coor[0] - 8) + abs(coor[1] - 8)
-    return min(-0.001, 0.003(200 - tick)/(15-dist))
+    return min(-0.001, 0.003*(200 - tick)/(15-dist))
 
 
 """
