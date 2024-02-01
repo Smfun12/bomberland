@@ -92,7 +92,7 @@ def compute_time_reward(observation: Observation, current_unit_id):
     tick = observation['tick']
     coor = observation['unit_state'][current_unit_id]['coordinates']
     dist = abs(coor[0] - 8) + abs(coor[1] - 8)
-    return min(-0.01, 0.003*(200 - tick)/(15-dist))
+    return min(-0.001, 0.003(200 - tick)/(15-dist))
 
 
 """
@@ -103,11 +103,15 @@ Reward function definition:
 4. -0.5: when losing 1 hp for 1 teammate
 5. -1: when losing teammate
 6. -1: when losing all 3 teammates
-7. \min\left(-0.01,\ \frac{0.003\left(200-x\right)}{15-a}\right): the longer game the bigger punishment is
+7. \min\left(-0.001,\ \frac{0.003\left(200-x\right)}{15-a}\right): the longer game the bigger punishment is
 8. -0.002: the unit is in a cell within reach of a bomb
 9. +0.002: the unit is in a safe cell when there is an active bomb nearby 
-10. +0.1: the unit activated bomb near an obstacle
+10. +0.05: the unit activated bomb near an obstacle
 11. -0.1: bumping into the wall
+12. -0.1: placing bomb on existing bomb
+13. -0.1: exiting limit in placing bombs
+14. +0.15: pick up FreezePowerup
+15. +0.15: pick up BlastPowerup
 """
 def calculate_reward(prev_observation: Observation, action: int, next_observation: Observation, current_agent_id: str, current_unit_id: str):
     reward = 0        
@@ -182,14 +186,37 @@ def calculate_reward(prev_observation: Observation, action: int, next_observatio
     next_activated_bomb_near_an_obstacle = unit_activated_bomb_near_an_obstacle(next_observation, current_unit_id)
     
     if not prev_activated_bomb_near_an_obstacle and next_activated_bomb_near_an_obstacle:
-        reward += 0.1
+        reward += 0.05
     
-    # 11. -0.1: bump into the wall
+    # 11. -0.1: bumping into the wall
         
     a = ACTIONS[action]
     prev_coor = prev_observation['unit_state'][current_unit_id]['coordinates']
     next_coor = next_observation['unit_state'][current_unit_id]['coordinates']
     if a in ["up", "down", "left", "right"] and prev_coor == next_coor:
-        reward -= 0.1
+        reward += (-0.1)
+
+    # 12. -0.1: placing bomb on existing bomb
+    
+    bombs = list(filter(lambda entity: entity.get("type") == "b", prev_observation['entities']))
+    if a == "bomb" and any([next_coor == b['coordinates'] for b in bombs]):
+        reward += (-0.1)
+
+    # 13. -0.1: exiting limit in placing bombs
+        
+    if a == "bomb" and len(get_unit_activated_bombs(prev_observation, current_unit_id)) >= 3:
+        reward += (-0.1)
+
+    # 14. +0.15: pick up FreezePowerup
+        
+    fps = list(filter(lambda entity: entity.get("type") == "fp", prev_observation['entities']))
+    if any([next_coor == fp.get("coordinates") for fp in fps]):
+        reward += 0.15 
+        
+    # 15. +0.15: pick up BlastPowerup
+    
+    bps = list(filter(lambda entity: entity.get("type") == "bp", prev_observation['entities']))
+    if any([next_coor == bp.get("coordinates") for bp in bps]):
+        reward += 0.15 
 
     return torch.tensor(reward, dtype=torch.float32).reshape(1)
