@@ -14,13 +14,15 @@ from components.environment.gym import Gym, GymEnv
 from components.environment.mocks import *
 from components.models.ppo import PPO
 from components.action import make_action
-from components.reward import calculate_reward
+from components.reward import calculate_reward, calculate_reward_stat
 from components.state import (
     action_dimensions,
     state_dimensions,
     observation_to_state
 )
 from components.types import State
+
+import pandas as pd
 
 """
 Simulation of two agents playing one againts the other.
@@ -66,6 +68,7 @@ def select_action(agent: PPO, state: State, steps_done: int, verbose: bool = Tru
 
 async def train(env: GymEnv, agent: PPO):
     cumulative_rewards = []
+    rewards_stats = []
 
     for epoch in range(EPOCHS):
         print(f"Started {epoch} epoch...")
@@ -86,9 +89,10 @@ async def train(env: GymEnv, agent: PPO):
             else:
                 next_observation, done, info = await env.step([action_or_idle])
 
-            reward = calculate_reward(prev_observation, action, next_observation, current_agent_id=agent_id,
-                                      current_unit_id=unit_id)
+            reward, reward_list = calculate_reward_stat(prev_observation, action, next_observation, current_agent_id=agent_id, current_unit_id=unit_id)
             next_state = observation_to_state(next_observation, current_agent_id=agent_id, current_unit_id=unit_id)
+
+            rewards_stats.append({"epoch": epoch, "step": steps_done, "rewards": reward_list})
 
             # saving reward and is_terminals
             agent.buffer.rewards.append(reward)
@@ -113,6 +117,25 @@ async def train(env: GymEnv, agent: PPO):
 
         # Compute statistics
         cumulative_rewards.append(cumulative_reward)
+    
+    print("Saving reward stats ...")
+    df = pd.DataFrame(rewards_stats)
+    df.to_json("training_rewards_stats_ppo.json")
+
+    print("Drawing plot: reward by type distribution over epochs")
+    epochs = range(1, EPOCHS + 1)
+    types = ["hit enemy", "kill enemy", "win", "hit ally", "kill ally", "lose",
+             "time", "danger cell", "safe cell", "hit obstacle", "bump into wall", 
+             "bomb on bomb", "too much bombs", "FP", "BP"]
+    ax = plt.axes()
+    for type in types:
+        tp = df[df["class"] == type].groupby("epoch").agg({"class": "count", "reward": "sum"})
+        ax.plot(epochs, tp['reward'], label = type)
+    ax.set_title('Cumulative reward by type and epoch')
+    ax.set_xlabel('Epoch')
+    ax.set_ylabel('Cumulative reward')
+    ax.xaxis.set_ticks(epochs)
+    plt.savefig("agent_ppo_rewards_by_type.png")
 
     print("Drawing plot: reward distribution over epochs")
     epochs = range(1, EPOCHS + 1)
