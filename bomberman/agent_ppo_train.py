@@ -23,6 +23,7 @@ from components.state import (
 )
 from components.types import State
 from components.environment.config import ACTIONS
+from components.utils.device import device
 
 """
 Simulation of two agents playing one againts the other.
@@ -34,7 +35,7 @@ UNITS = ["c", "d", "e", "f", "g", "h"]
 Hyperparameters
 """
 
-EPOCHS = 5
+EPOCHS = 500
 STEPS = 2400
 BATCH_SIZE = 128
 LEARNING_RATE_ACTOR = 0.0003
@@ -70,37 +71,33 @@ Upper Confidence Bound.
 """
 # UCB constant, may need tweaking based on the problem
 UCB_CONSTANT = 1.0
-
 def select_action_UCB(agent: PPO, state: State, steps_done: int, verbose: bool = True):
-
     agent_id = AGENTS[steps_done % 2]
     unit_id = UNITS[steps_done % 6]
     
     if verbose:
         print(f"Agent: {agent_id}, Unit: {unit_id}")
 
-    # Use the actor network to get Q-values
     with torch.no_grad():
-        if agent.has_continuous_action_space:
-            action_mean = agent.select_action(state)
-            q_values = action_mean  # Assuming continuous action space
-        else:
-            action_probs = agent.select_action(state)
-            q_values = action_probs
+        state = torch.FloatTensor(state).to(device)
+        action, action_logprob, state_val = agent.policy_old(state)
+        
+    agent.buffer.states.append(state)
+    agent.buffer.actions.append(action)
+    agent.buffer.logprobs.append(action_logprob)
+    agent.buffer.state_values.append(state_val)
+
+    # Use the actor network to get Q-values
+    state_action_values = agent.policy_old.critic(state)
 
     # Calculate the upper confidence bound for each action
-    ucb_values = []
-    for action in range(len(ACTIONS)):
-        # exploration_term = UCB_CONSTANT * math.sqrt(math.log(steps_done) / (1 + agent.action_counts[action]))
-        # ucb_values.append(q_values[:, action] + exploration_term)
-        ucb_values = q_values + UCB_CONSTANT * math.sqrt(math.log(steps_done) / (1 + agent.action_counts[action]))
-
+    ucb_values = state_action_values.squeeze() + UCB_CONSTANT * torch.sqrt(torch.log(torch.tensor([steps_done + 1], dtype=torch.float32)) / (1 + agent.action_counts))
 
     # Select the action with the highest UCB value
-    selected_action = torch.argmax(torch.tensor(ucb_values))
+    selected_action = torch.argmax(ucb_values)
 
     # Update action counts for the selected action
-    agent.action_counts[selected_action] += 1
+    agent.action_counts[selected_action.item()] += 1
 
     return selected_action, (agent_id, unit_id)
 

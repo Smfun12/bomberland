@@ -247,3 +247,10 @@ class PPO:
 
     def show(self): 
         print(self.policy_old)
+
+    def get_q_values(self, state):
+        with torch.no_grad():
+            state = torch.FloatTensor(state).to(device)
+            q_values = self.policy_old.critic(state)
+        return q_values.squeeze().cpu().numpy()
+
