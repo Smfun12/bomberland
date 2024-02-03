@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import math
 import time
 import os
 import torch
@@ -21,6 +22,7 @@ from components.state import (
     observation_to_state
 )
 from components.types import State
+from components.environment.config import ACTIONS
 
 """
 Simulation of two agents playing one againts the other.
@@ -32,7 +34,7 @@ UNITS = ["c", "d", "e", "f", "g", "h"]
 Hyperparameters
 """
 
-EPOCHS = 100
+EPOCHS = 5
 STEPS = 2400
 BATCH_SIZE = 128
 LEARNING_RATE_ACTOR = 0.0003
@@ -63,6 +65,45 @@ def select_action(agent: PPO, state: State, steps_done: int, verbose: bool = Tru
     return action, (agent_id, unit_id)
 
 
+"""
+Upper Confidence Bound.
+"""
+# UCB constant, may need tweaking based on the problem
+UCB_CONSTANT = 1.0
+
+def select_action_UCB(agent: PPO, state: State, steps_done: int, verbose: bool = True):
+
+    agent_id = AGENTS[steps_done % 2]
+    unit_id = UNITS[steps_done % 6]
+    
+    if verbose:
+        print(f"Agent: {agent_id}, Unit: {unit_id}")
+
+    # Use the actor network to get Q-values
+    with torch.no_grad():
+        if agent.has_continuous_action_space:
+            action_mean = agent.select_action(state)
+            q_values = action_mean  # Assuming continuous action space
+        else:
+            action_probs = agent.select_action(state)
+            q_values = action_probs
+
+    # Calculate the upper confidence bound for each action
+    ucb_values = []
+    for action in range(len(ACTIONS)):
+        # exploration_term = UCB_CONSTANT * math.sqrt(math.log(steps_done) / (1 + agent.action_counts[action]))
+        # ucb_values.append(q_values[:, action] + exploration_term)
+        ucb_values = q_values + UCB_CONSTANT * math.sqrt(math.log(steps_done) / (1 + agent.action_counts[action]))
+
+
+    # Select the action with the highest UCB value
+    selected_action = torch.argmax(torch.tensor(ucb_values))
+
+    # Update action counts for the selected action
+    agent.action_counts[selected_action] += 1
+
+    return selected_action, (agent_id, unit_id)
+
 async def train(env: GymEnv, agent: PPO):
     cumulative_rewards = []
 
@@ -76,7 +117,7 @@ async def train(env: GymEnv, agent: PPO):
 
         # Iterate and gather experience
         for steps_done in range(1, STEPS):
-            action, (agent_id, unit_id) = select_action(agent, prev_state, steps_done)
+            action, (agent_id, unit_id) = select_action_UCB(agent, prev_state, steps_done)
             action_or_idle = make_action(prev_observation, agent_id, unit_id, action)
             action_is_idle = action_or_idle is None
 
