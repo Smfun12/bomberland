@@ -70,7 +70,7 @@ def select_action(agent: PPO, state: State, steps_done: int, verbose: bool = Tru
 Upper Confidence Bound.
 """
 # UCB constant, may need tweaking based on the problem
-UCB_CONSTANT = 1.0
+UCB_CONSTANT = 1.5
 def select_action_UCB(agent: PPO, state: State, steps_done: int, verbose: bool = True):
     agent_id = AGENTS[steps_done % 2]
     unit_id = UNITS[steps_done % 6]

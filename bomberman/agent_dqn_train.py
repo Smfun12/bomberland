@@ -37,7 +37,7 @@ UNITS = ["c", "d", "e", "f", "g", "h"]
 Hyperparameters
 """
 
-EPOCHS = 500
+EPOCHS = 100
 STEPS = 1000
 BATCH_SIZE = 128
 LEARNING_RATE = 0.0003
@@ -72,6 +72,36 @@ def select_action(agent: DQNAgent, state: State, steps_done: int, verbose: bool 
     action = torch.tensor(action, dtype=torch.int64).reshape(1)
 
     return action, (agent_id, unit_id)
+
+"""
+Upper Confidence Bound.
+"""
+def select_action_UCB(agent: DQNAgent, state: State, steps_done: int, verbose: bool = True):
+    agent_id = AGENTS[steps_done % 2]
+    unit_id = UNITS[steps_done % 6]
+
+    if verbose:
+        print(f"Agent: {agent_id}, Unit: {unit_id}")
+
+    eps_threshold = EPS_MIN + (EPS_MAX - EPS_MIN) * math.exp(-1. * steps_done / EPS_DECAY)
+
+    if random.random() <= eps_threshold:
+        action = random.randrange(len(ACTIONS))
+    else:
+        with torch.no_grad():
+            # Assuming your DQNAgent has a method to get action values for a given state
+            action_values = agent(state)
+
+            # UCB exploration bonus without visit_count
+            exploration_bonus = math.sqrt(2 * math.log(steps_done + 1))
+            action_values += exploration_bonus
+
+            action = torch.argmax(action_values)
+
+    action = torch.tensor(action, dtype=torch.int64).reshape(1)
+
+    return action, (agent_id, unit_id)
+
 
 """
 Optimize memory samples.
@@ -137,7 +167,7 @@ async def train(env: GymEnv, policy_net: DQNAgent, target_net: DQNAgent, optimiz
 
         # Iterate and gather experience
         for steps_done in range(STEPS):
-            action, (agent_id, unit_id) = select_action(policy_net, prev_state, steps_done)
+            action, (agent_id, unit_id) = select_action_UCB(policy_net, prev_state, steps_done)
             action_or_idle = make_action(prev_observation, agent_id, unit_id, action=int(action.item()))
             action_is_idle = action_or_idle is None
 
@@ -146,7 +176,7 @@ async def train(env: GymEnv, policy_net: DQNAgent, target_net: DQNAgent, optimiz
             else:
                 next_observation, done, info = await env.step([action_or_idle])
 
-            reward = calculate_reward(prev_observation, next_observation, current_agent_id=agent_id, current_unit_id=unit_id)
+            reward = calculate_reward(prev_observation, action, next_observation, current_agent_id=agent_id, current_unit_id=unit_id)
             next_state = observation_to_state(next_observation, current_agent_id=agent_id, current_unit_id=unit_id)
 
             # Store the transition in memory
