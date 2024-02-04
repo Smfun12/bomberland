@@ -217,7 +217,7 @@ def calculate_reward_stat(prev_observation: Observation, action: int, next_obser
         "hit obstacle": 0.05,
         "bump into wall": -0.1,
         "bomb on bomb": -0.1,
-        "too much bombs": -0.1,
+        "too many bombs": -0.1,
         "FP": +0.15, # FreezePowerup
         "BP": +0.15 #BlastPowerup 
     }

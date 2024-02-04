@@ -39,7 +39,7 @@ STEPS = 2400
 BATCH_SIZE = 128
 LEARNING_RATE_ACTOR = 0.0003
 LEARNING_RATE_CRITIC = 0.001
-K_EPOCHS = 80  # update policy for K epochs in one PPO update
+K_EPOCHS = 10  # update policy for K epochs in one PPO update
 GAMMA = 0.99
 TAU = 0.005
 EPS_CLIP = 0.2  # clip parameter for PPO
@@ -92,7 +92,7 @@ async def train(env: GymEnv, agent: PPO):
             reward, reward_list = calculate_reward_stat(prev_observation, action, next_observation, current_agent_id=agent_id, current_unit_id=unit_id)
             next_state = observation_to_state(next_observation, current_agent_id=agent_id, current_unit_id=unit_id)
 
-            rewards_stats.append({"epoch": epoch, "step": steps_done, "rewards": reward_list})
+            rewards_stats += [{**r, "epoch": epoch, "step": steps_done} for r in reward_list]
 
             # saving reward and is_terminals
             agent.buffer.rewards.append(reward)
@@ -123,23 +123,23 @@ async def train(env: GymEnv, agent: PPO):
     df.to_json("training_rewards_stats_ppo.json")
 
     print("Drawing plot: reward by type distribution over epochs")
-    epochs = range(1, EPOCHS + 1)
     types = ["hit enemy", "kill enemy", "win", "hit ally", "kill ally", "lose",
              "time", "danger cell", "safe cell", "hit obstacle", "bump into wall", 
              "bomb on bomb", "too much bombs", "FP", "BP"]
     ax = plt.axes()
     for type in types:
-        tp = df[df["class"] == type].groupby("epoch").agg({"class": "count", "reward": "sum"})
-        ax.plot(epochs, tp['reward'], label = type)
+        tp = df[df['class'] == type].groupby("epoch").agg({"class": "count", "reward": "sum"})
+        ax.plot(tp.index, tp['reward'], label = type)
     ax.set_title('Cumulative reward by type and epoch')
     ax.set_xlabel('Epoch')
     ax.set_ylabel('Cumulative reward')
-    ax.xaxis.set_ticks(epochs)
+    ax.legend('lower left')
     plt.savefig("agent_ppo_rewards_by_type.png")
 
     print("Drawing plot: reward distribution over epochs")
     epochs = range(1, EPOCHS + 1)
     ax = plt.axes()
+    ax.clear()
     ax.plot(epochs, cumulative_rewards)
     ax.set_title('Cumulative reward by epoch')
     ax.set_xlabel('Epoch')
