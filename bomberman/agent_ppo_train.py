@@ -139,7 +139,6 @@ async def train(env: GymEnv, agent: PPO):
 
     print("Drawing plot: reward distribution over epochs")
     epochs = range(1, EPOCHS + 1)
-    ax = plt.axes()
     ax.clear()
     ax.plot(epochs, cumulative_rewards)
     ax.set_title('Cumulative reward by epoch')
@@ -147,6 +146,8 @@ async def train(env: GymEnv, agent: PPO):
     ax.set_ylabel('Cumulative reward')
     ax.xaxis.set_ticks(epochs)
     plt.savefig("agent_ppo_rewards.png")
+
+    ax.remove()
 
 
 def jsonize(json_data):
