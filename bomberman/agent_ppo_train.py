@@ -34,12 +34,12 @@ UNITS = ["c", "d", "e", "f", "g", "h"]
 Hyperparameters
 """
 
-EPOCHS = 100
+EPOCHS = 3
 STEPS = 2400
 BATCH_SIZE = 128
 LEARNING_RATE_ACTOR = 0.0003
 LEARNING_RATE_CRITIC = 0.001
-K_EPOCHS = 10  # update policy for K epochs in one PPO update
+K_EPOCHS = 5  # update policy for K epochs in one PPO update
 GAMMA = 0.99
 TAU = 0.005
 EPS_CLIP = 0.2  # clip parameter for PPO
@@ -127,13 +127,14 @@ async def train(env: GymEnv, agent: PPO):
              "time", "danger cell", "safe cell", "hit obstacle", "bump into wall", 
              "bomb on bomb", "too much bombs", "FP", "BP"]
     ax = plt.axes()
+    ax.clear()
     for type in types:
         tp = df[df['class'] == type].groupby("epoch").agg({"class": "count", "reward": "sum"})
         ax.plot(tp.index, tp['reward'], label = type)
     ax.set_title('Cumulative reward by type and epoch')
     ax.set_xlabel('Epoch')
     ax.set_ylabel('Cumulative reward')
-    ax.legend('lower left')
+    ax.legend(loc = 'lower left')
     plt.savefig("agent_ppo_rewards_by_type.png")
 
     print("Drawing plot: reward distribution over epochs")
