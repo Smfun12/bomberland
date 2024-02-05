@@ -73,6 +73,32 @@ def select_action(agent: DQNAgent, state: State, steps_done: int, verbose: bool 
 
     return action, (agent_id, unit_id)
 
+def select_action_UCB(agent: DQNAgent, state: State, steps_done: int, verbose: bool = True):
+    agent_id = AGENTS[steps_done % 2]
+    unit_id = UNITS[steps_done % 6]
+
+    if verbose:
+        print(f"Agent: {agent_id}, Unit: {unit_id}")
+
+    eps_threshold = EPS_MIN + (EPS_MAX - EPS_MIN) * math.exp(-1. * steps_done / EPS_DECAY)
+
+    if random.random() <= eps_threshold:
+        action = random.randrange(len(ACTIONS))
+    else:
+        with torch.no_grad():
+            # Assuming your DQNAgent has a method to get action values for a given state
+            action_values = agent(state)
+
+            # UCB exploration bonus without visit_count
+            exploration_bonus = math.sqrt(2 * math.log(steps_done + 1))
+            action_values += exploration_bonus
+
+            action = torch.argmax(action_values)
+
+    action = torch.tensor(action, dtype=torch.int64).reshape(1)
+
+    return action, (agent_id, unit_id)
+
 """
 Upper Confidence Bound.
 """

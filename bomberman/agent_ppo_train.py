@@ -22,8 +22,14 @@ from components.state import (
     observation_to_state
 )
 from components.types import State
+<<<<<<< Updated upstream
 from components.environment.config import ACTIONS
 from components.utils.device import device
+=======
+from components.utils.device import device
+
+import pandas as pd
+>>>>>>> Stashed changes
 
 """
 Simulation of two agents playing one againts the other.
@@ -35,19 +41,27 @@ UNITS = ["c", "d", "e", "f", "g", "h"]
 Hyperparameters
 """
 
+<<<<<<< Updated upstream
 EPOCHS = 500
+=======
+EPOCHS = 100
+>>>>>>> Stashed changes
 STEPS = 2400
 BATCH_SIZE = 128
 LEARNING_RATE_ACTOR = 0.0003
 LEARNING_RATE_CRITIC = 0.001
+<<<<<<< Updated upstream
 K_EPOCHS = 80 # update policy for K epochs in one PPO update
+=======
+K_EPOCHS = 50  # update policy for K epochs in one PPO update
+>>>>>>> Stashed changes
 GAMMA = 0.99
 TAU = 0.005
 EPS_CLIP = 0.2 # clip parameter for PPO
 ACTION_STD = 0.6
 HAS_CONTINUOUS_ACTION_SPACE = False
 PRINT_EVERY = 100
-UPDATE_EVERY = 100
+UPDATE_EVERY = 25
 SAVE_EVERY = 10000
 
 """
@@ -70,7 +84,11 @@ def select_action(agent: PPO, state: State, steps_done: int, verbose: bool = Tru
 Upper Confidence Bound.
 """
 # UCB constant, may need tweaking based on the problem
+<<<<<<< Updated upstream
 UCB_CONSTANT = 1.5
+=======
+UCB_CONSTANT = 2.0
+>>>>>>> Stashed changes
 def select_action_UCB(agent: PPO, state: State, steps_done: int, verbose: bool = True):
     agent_id = AGENTS[steps_done % 2]
     unit_id = UNITS[steps_done % 6]

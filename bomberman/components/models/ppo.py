@@ -114,6 +114,10 @@ class PPO:
     def __init__(self, state_dim, action_dim, lr_actor, lr_critic, gamma, K_epochs, eps_clip, has_continuous_action_space, action_std_init=0.6, policy=None):
 
         self.has_continuous_action_space = has_continuous_action_space
+<<<<<<< Updated upstream
+=======
+        
+>>>>>>> Stashed changes
         self.action_dim = action_dim
 
         if has_continuous_action_space:
