@@ -92,7 +92,7 @@ def compute_time_reward(observation: Observation, current_unit_id):
     tick = observation.get('tick')
     coor = observation['unit_state'][current_unit_id]['coordinates']
     dist = abs(coor[0] - 8) + abs(coor[1] - 8)
-    return min(-0.001, 0.003*(200 - tick)/(15-dist+0.0000001))
+    return min(-0.05, 0.005*(200 - tick)/(15-dist+0.0000001))
 
 """
 Reward function definition:
@@ -205,21 +205,21 @@ Reward function definition:
 def calculate_reward_stat(prev_observation: Observation, action: int, next_observation: Observation, current_agent_id: str, current_unit_id: str):
 
     reward_dict = {
-        "hit enemy": 0.45,
-        "kill enemy": 2.95,
-        "win": 10,
+        "hit enemy": 1,
+        "kill enemy": 5,
+        "win": 16,
         "hit ally": -0.5,
         "kill ally": -3,
         "lose": -10,
-        "time": -0.001, # also function "compute_time_reward" could be used
-        "danger cell": -0.02,
-        "safe cell": 0.02,
-        "hit obstacle": 0.1,
+        "time": compute_time_reward(next_observation, current_unit_id), # -0.05
+        "danger cell": -0.05,
+        "safe cell": 0.1,
+        "hit obstacle": 0.25,
         "bump into wall": -0.1,
         "bomb on bomb": -0.1,
         "too many bombs": -0.1,
-        "FP": 0.15, # FreezePowerup
-        "BP": 0.15 # BlastPowerup 
+        "FP": 0.5, # FreezePowerup
+        "BP": 0.5 # BlastPowerup 
     }
 
     reward_list = []
@@ -231,7 +231,7 @@ def calculate_reward_stat(prev_observation: Observation, action: int, next_obser
     next_enemy_units_hps = find_enemy_units_hps(next_observation, current_agent_id)
     
     enemy_units_hps_diff = prev_enemy_units_hps - next_enemy_units_hps
-    if enemy_units_hps_diff > 0:
+    if enemy_units_hps_diff > 0 and next_enemy_units_hps >= 0 and prev_enemy_units_hps >= 0:
         reward += (enemy_units_hps_diff * reward_dict['hit enemy'])
         reward_list.append({"class": "hit enemy", "reward": enemy_units_hps_diff * reward_dict['hit enemy']})
 
@@ -256,7 +256,7 @@ def calculate_reward_stat(prev_observation: Observation, action: int, next_obser
     next_my_units_hps = find_my_units_hps(next_observation, current_agent_id)
 
     my_units_hps_diff = prev_my_units_hps - next_my_units_hps
-    if my_units_hps_diff > 0:
+    if my_units_hps_diff > 0 and next_my_units_hps >= 0 and prev_my_units_hps >= 0:
         reward += (my_units_hps_diff * reward_dict["hit ally"])
         reward_list.append({"class": "hit ally", "reward": my_units_hps_diff * reward_dict["hit ally"]})
 
