@@ -34,19 +34,19 @@ UNITS = ["c", "d", "e", "f", "g", "h"]
 Hyperparameters
 """
 
-EPOCHS = 3
+EPOCHS = 100
 STEPS = 2400
 BATCH_SIZE = 128
 LEARNING_RATE_ACTOR = 0.0003
 LEARNING_RATE_CRITIC = 0.001
-K_EPOCHS = 5  # update policy for K epochs in one PPO update
+K_EPOCHS = 50  # update policy for K epochs in one PPO update
 GAMMA = 0.99
 TAU = 0.005
 EPS_CLIP = 0.2  # clip parameter for PPO
 ACTION_STD = 0.6
 HAS_CONTINUOUS_ACTION_SPACE = False
 PRINT_EVERY = 100
-UPDATE_EVERY = 100
+UPDATE_EVERY = 25
 SAVE_EVERY = 10000
 
 """

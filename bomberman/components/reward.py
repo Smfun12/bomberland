@@ -205,21 +205,21 @@ Reward function definition:
 def calculate_reward_stat(prev_observation: Observation, action: int, next_observation: Observation, current_agent_id: str, current_unit_id: str):
 
     reward_dict = {
-        "hit enemy": 0.25,
-        "kill enemy": 0.5,
-        "win": 1,
+        "hit enemy": 0.45,
+        "kill enemy": 2.95,
+        "win": 10,
         "hit ally": -0.5,
-        "kill ally": -1,
-        "lose": -1,
+        "kill ally": -3,
+        "lose": -10,
         "time": -0.001, # also function "compute_time_reward" could be used
-        "danger cell": -0.002,
-        "safe cell": 0.002,
-        "hit obstacle": 0.05,
+        "danger cell": -0.02,
+        "safe cell": 0.02,
+        "hit obstacle": 0.1,
         "bump into wall": -0.1,
         "bomb on bomb": -0.1,
         "too many bombs": -0.1,
-        "FP": +0.15, # FreezePowerup
-        "BP": +0.15 #BlastPowerup 
+        "FP": 0.15, # FreezePowerup
+        "BP": 0.15 # BlastPowerup 
     }
 
     reward_list = []
@@ -327,7 +327,7 @@ def calculate_reward_stat(prev_observation: Observation, action: int, next_obser
         
     if a == "bomb" and len(get_unit_activated_bombs(prev_observation, current_unit_id)) >= 3:
         reward += reward_dict["too many bombs"]
-        reward_list.append({"class": "too many bomb", "reward": reward_dict["too many bomb"]})
+        reward_list.append({"class": "too many bomb", "reward": reward_dict["too many bombs"]})
 
     # 14. +0.15: pick up FreezePowerup
         
